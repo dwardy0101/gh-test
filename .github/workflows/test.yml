@@ -28,12 +28,12 @@ jobs:
       - name: Build with Gradle
         run: ./gradlew build
 
-#      - name: List APKs
-#        run: ls -R app/build/outputs/apk
+      - name: List APKs
+        run: ls -R app/build/outputs/apk
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: my-build
-          path: build/libs/   # or wherever your build outputs are
+          path: app/build/outputs/apk   # or wherever your build outputs are
 
