@@ -3,7 +3,7 @@ name: Deploying My Build
 on:
   push:
     tags:
-      - '*'           # any tag
+      - 'v*'           # any tag
     branches:
       - main
 
