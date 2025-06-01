@@ -32,7 +32,7 @@ jobs:
         run: ls -R build/
         
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: my-build
           path: build/libs/   # or wherever your build outputs are
