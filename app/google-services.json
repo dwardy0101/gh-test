@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1031284743773",
+    "project_id": "bindfirestore",
+    "storage_bucket": "bindfirestore.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1031284743773:android:c2af20653e33a90c5bf7b4",
+        "android_client_info": {
+          "package_name": "com.sam.bindfirestore"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhB2uX3iJL7h6fxJUU8baafsghiu0rb5A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
