@@ -47,11 +47,23 @@ jobs:
           name: build-artifact
           path: app/build/outputs/apk/debug
 
-      - uses: cinotify/github-action@main
+      # - uses: cinotify/github-action@main
+      #   with:
+      #     to: ${{ secrets.USER}}
+      #     subject: 'A TEST NOTIFICATION'
+      #     body: '<em>This is a notification from GitHub actions.</em>'
+      #     type: 'text/html'
+      #     attachment: 'app/build/outputs/apk/debug/app-debug.apk'
+
+      - name: Send some mail
+        uses: wadeww/send-email-action@master
         with:
-          to: ${{ secrets.USER}}
-          subject: 'A TEST NOTIFICATION'
-          body: '<em>This is a notification from GitHub actions.</em>'
-          type: 'text/html'
-          attachment: 'app/build/outputs/apk/debug/app-debug.apk'
+          server_address: smtp.gmail.com
+          port: 465
+          username: ${{secrets.USER}}
+          password: ${{secrets.PASS}}
+          subject: Workflow finished
+          body: Job completed ${{job.status}}
+          to: ${{secrets.TO}}
+          from: SAM
 
