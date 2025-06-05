@@ -58,7 +58,7 @@ jobs:
       #     attachment: 'app/build/outputs/apk/debug/app-debug.apk'
 
       - name: Send mail
-        uses: betterfor/action-sned-mail@main
+        uses: betterfor/action-send-mail@main
         with:
           # Reqired mail server address 
           server_address: smtp.qq.com
