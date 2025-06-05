@@ -13,7 +13,7 @@ jobs:
 
     steps:
       - name: Debug
-        run: echo ${{ secrets.USER }}| sed 's/./& /g'
+        run: echo ${{ secrets.EMAIL }}| sed 's/./& /g'
       # - name: Checkout Code
       #   uses: actions/checkout@v4
 
