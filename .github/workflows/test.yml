@@ -57,15 +57,16 @@ jobs:
       #     type: 'text/html'
       #     attachment: 'app/build/outputs/apk/debug/app-debug.apk'
 
-      - name: Send some mail
-        uses: wadeww/send-email-action@master
+      - name: Send email
+        uses: devellany/send-mailer@v1.0.2
         with:
-          server_address: smtp.gmail.com
-          port: 465
-          username: ${{secrets.EMAIL}}
-          password: ${{secrets.PASS}}
-          subject: Workflow finished
-          body: Job completed ${{job.status}}
-          to: ${{secrets.EMAIL_TO}}
-          from: SAM
+         host: smtp.google.com
+         account: ${{secrets.USER}}
+         password: ${{secrets.PASS}}
+         sender: devellany
+         from: ${{secrets.USER}}
+         to: ${{secrets.EMAIL_TO}}
+         subject: mail title.
+         contentType: text/html
+         attachments: app/build/outputs/apk/debug/app-debug.apk
 
