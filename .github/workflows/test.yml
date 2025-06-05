@@ -57,16 +57,38 @@ jobs:
       #     type: 'text/html'
       #     attachment: 'app/build/outputs/apk/debug/app-debug.apk'
 
-      - name: Send email
-        uses: devellany/send-mailer@v1.0.2
+      - name: Send mail
+        uses: betterfor/action-sned-mail@main
         with:
-         host: smtp.google.com
-         account: ${{secrets.USER}}
-         password: ${{secrets.PASS}}
-         sender: devellany
-         from: ${{secrets.USER}}
-         to: ${{secrets.EMAIL_TO}}
-         subject: mail title.
-         contentType: text/html
-         attachments: app/build/outputs/apk/debug/app-debug.apk
-
+          # Reqired mail server address 
+          server_address: smtp.qq.com
+          # Optional Server port, default 25 (if server_port is 465 this connection use TLS)
+          server_port: 465
+          # # Optional (recommended): mail server username
+          # username: ${{secrets.MAIL_USERNAME}}
+          # # Optional (recommended): mail server password
+          # password: ${{secrets.MAIL_PASSWORD}}
+          # Required mail subject
+          subject: Github Actions job results
+          # Required recipients address
+          to: ${{secrets.MAIL_TO}}
+          # Required sender full name (address can be skipped)
+          from: alice # <alice@example.com>
+          # Optional plain body
+          body: Build job of ${{github.repository}} completed successfully!
+          # # Optional HTML body read from file
+          # html_body: file://README.md
+          # Optional carbon copy recipients
+          cc: a@example.com,b@example.com
+          # Optional blind carbon copy recipients
+          bcc: c@example.com,d@example.com
+          # # Optional recipient of the email response
+          # reply_to: luke@example.com
+          # # Optional Message ID this message is replying to
+          # in_reply_to: <random-luke@example.com>
+          # Optional converting Markdown to HTML (set content_type to text/html too)
+          convert_mardown: true
+          # Optional attachments
+          attachments: app/build/outputs/apk/debug/app-debug.apk
+          # Optional priority: 'high', 'normal' (default) or 'low'
+          priority: high
