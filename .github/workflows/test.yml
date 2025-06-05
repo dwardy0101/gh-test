@@ -73,21 +73,21 @@ jobs:
           # Required recipients address
           to: ${{secrets.MAIL_TO}}
           # Required sender full name (address can be skipped)
-          from: alice # <alice@example.com>
+          from: ${{secrets.USER}}
           # Optional plain body
           body: Build job of ${{github.repository}} completed successfully!
           # # Optional HTML body read from file
           # html_body: file://README.md
-          # Optional carbon copy recipients
-          cc: a@example.com,b@example.com
-          # Optional blind carbon copy recipients
-          bcc: c@example.com,d@example.com
+          # # Optional carbon copy recipients
+          # cc: a@example.com,b@example.com
+          # # Optional blind carbon copy recipients
+          # bcc: c@example.com,d@example.com
           # # Optional recipient of the email response
           # reply_to: luke@example.com
           # # Optional Message ID this message is replying to
           # in_reply_to: <random-luke@example.com>
-          # Optional converting Markdown to HTML (set content_type to text/html too)
-          convert_mardown: true
+          # # Optional converting Markdown to HTML (set content_type to text/html too)
+          # convert_mardown: true
           # Optional attachments
           attachments: app/build/outputs/apk/debug/app-debug.apk
           # Optional priority: 'high', 'normal' (default) or 'low'
