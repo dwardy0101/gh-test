@@ -55,11 +55,14 @@ jobs:
    steps:
     - name: Check inputs
       run: |
-        echo "::add-mask::${{ github.event.inputs.deploygate-token }}"
-        echo "::add-mask::${{ github.event.inputs.deploygate-name }}"
+        TOKEN="${{ github.event.inputs.deploygate-token }}"
+        OWNER="${{ github.event.inputs.deploygate-name }}"
+        
+        echo "::add-mask::$TOKEN"
+        echo "::add-mask::$OWNER"
         
         echo "Checking inputs..."
-        if [[ "${{ github.event.inputs.deploygate-token }}" == "none" || "${{ github.event.inputs.deploygate-name }}" == "none" ]]; then
+        if [[ "$TOKEN" == "none" || "$OWNER" == "none" ]]; then
           echo "🚫 Invalid inputs. Exiting workflow."
           exit 1
         else
