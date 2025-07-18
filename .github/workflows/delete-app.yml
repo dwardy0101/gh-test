@@ -1,5 +1,6 @@
 on:
- push:
+ workflow_dispatch:
+ # push:
 
 env:
   APP_ID: com.nativecamp.nativecamp
