@@ -1,0 +1,20 @@
+on:
+ push:
+
+env:
+  APP_ID: com.nativecamp.nativecamp
+  OWNER_NAME: deploygatenc
+  TOKEN: 12a38207-1567-4f0b-8e17-661d9d4f7523
+  DISTRIBUTION_NAME: master build
+
+jobs:
+ delete-app:
+  runs-on: ubuntu-latest
+  steps:
+  - name: Delete Deploygate Distribution
+    run: |
+      curl \
+        --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
+        -H "Authorization: Bearer ${TOKEN}" \
+        -X DELETE \
+        --form-string "distribution_name=${DISTRIBUTION_NAME}"
