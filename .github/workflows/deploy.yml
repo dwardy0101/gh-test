@@ -13,11 +13,11 @@ on:
      required: true
      default: 'none'
 
-    upload-name: 
-     description: 'clickable build-link (distribution name)'
-     type: string
-     required: true
-     default: 'my-build'
+    # upload-name: 
+    #  description: 'clickable build-link (distribution name)'
+    #  type: string
+    #  required: true
+    #  default: 'my-build'
      
     target-branch: 
      description: 'your target branch'
@@ -214,7 +214,7 @@ jobs:
           OWNER_NAME: ${{ github.event.inputs.deploygate-name }}
           PLATFORM_TYPE: android
           APP_ID: com.nativecamp.nativecamp
-          DISTRIBUTION_NAME: "${{ github.event.inputs.upload-name }}"
+          DISTRIBUTION_NAME: "${{ github.event.inputs.target-branch }}"
         run: |
           RESPONSE=$(curl --silent --show-error --fail -X DELETE \
           --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
@@ -232,7 +232,7 @@ jobs:
           message: |
             ${{ github.event.inputs.target-branch }}
 
-          distribution_name: "${{ github.event.inputs.upload-name }}"
+          distribution_name: "${{ github.event.inputs.target-branch }}"
           release_note: |
             Repository: ${{ github.repositoryUrl }}
             Branch: ${{ github.event.inputs.target-branch }}
