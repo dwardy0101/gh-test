@@ -1,42 +1,71 @@
 on:
   workflow_dispatch:
+   inputs:
+    deploygate-token:
+     description: 'your deploygate token'
+     type: string
+     required: true
+     default: 'none'
+     
+    deploygate-name: 
+     description: 'your deploygate name'
+     type: string
+     required: true
+     default: 'none'
+     
+    target-branch: 
+     description: 'your branch to deploy'
+     type: string
+     required: true
+     default: 'master'
+
+    flavor: 
+     description: 'flavor variant of the project'
+     required: true
+     type: choice
+     options:
+          - Stg
+          - Dev
+          - Tb
+          - Ds1
+          - Ds2
+          - Ds3
+          - Ds4
+          - Dev1
+          - Dev2
+          - Dev3
+          - Ds1_1
+          - Ds1_2
+          - Ds2_1
+          - Ds2_2
+          - Ds3_1
+          - Ds3_2
+          - Ds4_1
+          - Ds4_2
 
 jobs:
-  # verify-tag:
-  #   runs-on: ubuntu-latest
-  #   env:
-  #     TARGET_BRANCH: master
-
-  #   steps:
-  #     - name: Checkout Android Project (tag commit)
-  #       uses: actions/checkout@v4
-  #       with:
-  #         path: NativeCamp-Android
-
-  #     - name: Fetch target branch
-  #       working-directory: NativeCamp-Android
-  #       run: git fetch origin $TARGET_BRANCH
-
-  #     - name: Verify tag
-  #       working-directory: NativeCamp-Android
-  #       run: |
-  #         TAG_COMMIT=$(git rev-parse ${{ github.ref_name }})
-  #         echo "🔍 Tag: ${{ github.ref_name }}"
-  #         echo "🔍 Tag commit: $TAG_COMMIT"
-  #         echo "🔍 Comparing to branch: $TARGET_BRANCH"
-          
-  #         if git merge-base --is-ancestor "$TAG_COMMIT" origin/$TARGET_BRANCH; then
-  #           echo "✅ Tag is based on $TARGET_BRANCH"
-  #         else
-  #           echo "❌ Tag is NOT based on $TARGET_BRANCH. Exiting."
-  #           exit 1
-  #         fi
-
+  verify-inputs:
+   runs-on: ubuntu-latest
+   steps:
+    - name: Check inputs
+      run: |
+        echo "Checking inputs..."
+        if [[ "${{ github.event.inputs.deploygate-token }}" == "none" || "${{ github.event.inputs.deploygate-name }}" == "none" ]]; then
+          echo "🚫 Invalid inputs. Exiting workflow."
+          exit 1
+        else
+          echo "✅ Inputs are valid."
+          echo "::add-mask::${{ github.event.inputs.deploygate-token }}"
+          echo "::add-mask::${{ github.event.inputs.deploygate-name }}"
+        fi
+        
+      
   ########################
   # NATIVECAMP FLUTTER
   ########################
   build-aar:
-    # needs: verify-tag
+    needs: verify-inputs
+    if: ${{ needs.verify-inputs.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
       # For debugging purposes, enable this code.
@@ -133,6 +162,7 @@ jobs:
           repository: VJSOL/NativeCamp-Android
           path: NativeCamp-Android
           token: ${{ secrets.MY_PAT }}
+          ref: ${{ github.event.inputs.target-branch }}
 
       - name: Cache Gradle
         uses: actions/cache@v4
@@ -156,30 +186,40 @@ jobs:
           java-version: 17
 
       - name: Make gradlew executable
-        run: chmod +x gradlew
         working-directory: NativeCamp-Android
+        run: chmod +x gradlew
 
       - name: Build a debug APK
         working-directory: NativeCamp-Android
-        run: ./gradlew assembleDev1GoogleDebug
+        run: |
+           FLAVOR="${{ github.event.inputs.flavor }}"
+           ./gradlew assemble${FLAVOR}GoogleDebug
+
+      - name: Prepare Upload APK
+        run: |
+          FLAVOR="${{ github.event.inputs.flavor }}"
+          FLAVOR_LOWER=$(echo "$FLAVOR" | tr '[:upper:]' '[:lower:]')
+          APK_PATH="NativeCamp-Android/app/build/outputs/apk/${FLAVOR_LOWER}Google/debug/app-${FLAVOR_LOWER}-google-debug.apk"
+          echo "Using APK path: $APK_PATH"
+          echo "APK_PATH=$APK_PATH" >> $GITHUB_ENV
 
       - name: Upload APK as artifact
         uses: actions/upload-artifact@v4
         with:
-          name: NC APK
-          path: NativeCamp-Android/app/build/outputs/apk/dev1Google/debug/app-dev1-google-debug.apk
+          name: apk-${{ github.event.inputs.flavor }}
+          path: ${{ env.APK_PATH }}
 
       - name: Upload APK to DeployGate
         id: deploygate
         uses: DeployGate/deploygate-upload-github-action@v1.1.0
         with:
-          api_token: ${{ secrets.DEPLOYGATE_API_TOKEN }}
-          owner_name: ${{ secrets.DEPLOYGATE_OWNER_NAME }}
-          file_path: NativeCamp-Android/app/build/outputs/apk/dev1Google/debug/app-dev1-google-debug.apk
+          api_token: ${{ github.event.inputs.deploygate-token }} #${{ secrets.DEPLOYGATE_API_TOKEN }}
+          owner_name: ${{ github.event.inputs.deploygate-name }} #${{ secrets.DEPLOYGATE_OWNER_NAME }}
+          file_path: ${{ env.APK_PATH }} #NativeCamp-Android/app/build/outputs/apk/dev1Google/debug/app-dev1-google-debug.apk
           message: |
             ${{ github.event.repository.name }}-${{ github.ref_name }}
 
-          distribution_name: "${{ github.ref_name }} build"
+          distribution_name: "${{ github.event.inputs.target-branch }} build"
           release_note: |
             Repository: ${{ github.repositoryUrl }}
             Branch: ${{ github.ref_name }}
