@@ -14,13 +14,13 @@ on:
      default: 'none'
      
     target-branch: 
-     description: 'your branch to deploy'
+     description: 'your target branch'
      type: string
      required: true
      default: 'master'
 
     flavor: 
-     description: 'flavor variant of the project'
+     description: 'flavor or environment'
      required: true
      type: choice
      options:
@@ -68,12 +68,6 @@ jobs:
     if: ${{ needs.verify-inputs.result == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      # For debugging purposes, enable this code.
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      #   with:
-      #     detached: true
-
       - name: Checkout Flutter Module
         uses: actions/checkout@v4
         with:
@@ -150,12 +144,6 @@ jobs:
     needs: build-aar
     runs-on: ubuntu-latest
     steps:
-      # For debugging purposes, enable this code.
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      #   with:
-      #     detached: true
-
       - name: Checkout Android Project
         uses: actions/checkout@v4
         with:
@@ -217,12 +205,12 @@ jobs:
           owner_name: ${{ github.event.inputs.deploygate-name }} #${{ secrets.DEPLOYGATE_OWNER_NAME }}
           file_path: ${{ env.APK_PATH }} #NativeCamp-Android/app/build/outputs/apk/dev1Google/debug/app-dev1-google-debug.apk
           message: |
-            ${{ github.event.repository.name }}-${{ github.ref_name }}
+            ${{ github.event.inputs.target-branch }}
 
           distribution_name: "${{ github.event.inputs.target-branch }} build"
           release_note: |
             Repository: ${{ github.repositoryUrl }}
-            Branch: ${{ github.ref_name }}
+            Branch: ${{ github.event.inputs.target-branch }}
             Commit: ${{ github.sha }}
 
       - name: Print Results
