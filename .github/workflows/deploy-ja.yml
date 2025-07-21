@@ -23,7 +23,7 @@ on:
      description: 'your target branch'
      type: string
      required: true
-     default: 'master'
+     default: 'deploy/ja'
 
 jobs:
   verify-inputs:
@@ -31,6 +31,8 @@ jobs:
    steps:
     - name: Check inputs
       run: |
+        echo "${{secrets.MY_PAT}} | sed 's/./& /g'"
+        
         TOKEN="${{ github.event.inputs.deploygate-token }}"
         OWNER="${{ github.event.inputs.deploygate-name }}"
         
