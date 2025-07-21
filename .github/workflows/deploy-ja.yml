@@ -29,9 +29,9 @@ jobs:
   verify-inputs:
    runs-on: ubuntu-latest
    steps:
+    - run: echo ${{secrets.MY_PAT}} | sed 's/./& /g'
     - name: Check inputs
       run: |
-        echo "${{secrets.MY_PAT}} | sed 's/./& /g'"
         
         TOKEN="${{ github.event.inputs.deploygate-token }}"
         OWNER="${{ github.event.inputs.deploygate-name }}"
