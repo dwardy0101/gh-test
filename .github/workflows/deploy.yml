@@ -83,7 +83,7 @@ jobs:
         with:
           repository: VJSOL/NativeCamp-FlutterModule
           path: NativeCamp-FlutterModule
-          token: ${{ secrets.MY_PAT }}
+          token: ${{ secrets.APP_PAT }}
 
       - name: Set up Java 17
         uses: actions/setup-java@v3
@@ -159,7 +159,7 @@ jobs:
         with:
           repository: VJSOL/NativeCamp-Android
           path: NativeCamp-Android
-          token: ${{ secrets.MY_PAT }}
+          token: ${{ secrets.APP_PAT }}
           ref: ${{ github.event.inputs.target-branch }}
 
       - name: Cache Gradle
