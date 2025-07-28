@@ -13,11 +13,11 @@ on:
      required: true
      default: 'none'
 
-    # upload-name: 
-    #  description: 'clickable build-link (distribution name)'
-    #  type: string
-    #  required: true
-    #  default: 'my-build'
+    distribution-name: 
+     description: 'distribution to replace/delete'
+     type: string
+     required: true
+     default: 'none'
      
     target-branch: 
      description: 'your target branch'
@@ -222,6 +222,40 @@ jobs:
       #     --form-string "distribution_name=${DISTRIBUTION_NAME}")
       #     echo "DeployGate Response: $RESPONSE" 
 
+      # - name: Fetch Distribution Title and Delete DeployGate Distribution
+      #   continue-on-error: true
+      #   env:
+      #     TOKEN: ${{ github.event.inputs.deploygate-token }}
+      #     OWNER_NAME: ${{ github.event.inputs.deploygate-name }}
+      #     PLATFORM_TYPE: android
+      #     APP_ID: com.nativecamp.nativecamp
+      #   run: |
+      #     echo "Fetching current distributions..."
+      
+      #     # Step 1: Fetch distributions
+      #     RESPONSE=$(curl --silent --show-error --fail \
+      #       --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
+      #       -H "Authorization: Bearer ${TOKEN}")
+      
+      #     # Step 2: Extract the first title
+      #     DISTRIBUTION_NAME=$(echo "$RESPONSE" | jq -r '.results.distributions[0].title')
+      
+      #     if [ -z "$DISTRIBUTION_NAME" ] || [ "$DISTRIBUTION_NAME" = "null" ]; then
+      #       echo "❌ Failed to extract distribution name. Aborting delete."
+      #       exit 0
+      #     fi
+      
+      #     echo "🎯 Deleting distribution with title: '$DISTRIBUTION_NAME'"
+      
+      #     # Step 3: Send DELETE request with extracted title
+      #     DELETE_RESPONSE=$(curl --silent --show-error --fail -X DELETE \
+      #       --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
+      #       -H "Authorization: Bearer ${TOKEN}" \
+      #       --form-string "distribution_name=${DISTRIBUTION_NAME}")
+      
+      #     echo "🧹 DeployGate DELETE Response: $DELETE_RESPONSE"
+
+
       - name: Fetch Distribution Title and Delete DeployGate Distribution
         continue-on-error: true
         env:
@@ -229,6 +263,7 @@ jobs:
           OWNER_NAME: ${{ github.event.inputs.deploygate-name }}
           PLATFORM_TYPE: android
           APP_ID: com.nativecamp.nativecamp
+          DIST_NAME_TO_DELETE: ${{ github.event.inputs.distribution-name }}
         run: |
           echo "Fetching current distributions..."
       
@@ -237,23 +272,41 @@ jobs:
             --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
             -H "Authorization: Bearer ${TOKEN}")
       
-          # Step 2: Extract the first title
-          DISTRIBUTION_NAME=$(echo "$RESPONSE" | jq -r '.results.distributions[0].title')
+          COUNT=$(echo "$RESPONSE" | jq '.results.distributions | length')
       
-          if [ -z "$DISTRIBUTION_NAME" ] || [ "$DISTRIBUTION_NAME" = "null" ]; then
-            echo "❌ Failed to extract distribution name. Aborting delete."
+          echo "📦 Found $COUNT distribution(s)"
+      
+          # Step 2: Only proceed if exactly 2 distributions exist
+          if [ "$COUNT" -ne 2 ]; then
+            echo "🛑 Not exactly 2 distributions — skipping deletion."
             exit 0
           fi
       
-          echo "🎯 Deleting distribution with title: '$DISTRIBUTION_NAME'"
+          # Step 3: Determine which distribution to delete
+          if [ "$DIST_NAME_TO_DELETE" = "none" ]; then
+            DISTRIBUTION_NAME=$(echo "$RESPONSE" | jq -r '.results.distributions[0].title')
+            echo "🧠 'none' specified — deleting the first distribution: '$DISTRIBUTION_NAME'"
+          elif [ -n "$DIST_NAME_TO_DELETE" ] && [ "$DIST_NAME_TO_DELETE" != "null" ]; then
+            DISTRIBUTION_NAME="$DIST_NAME_TO_DELETE"
+            echo "🔧 Using manually specified distribution to delete: '$DISTRIBUTION_NAME'"
+          else
+            echo "❌ Invalid distribution name input — aborting delete."
+            exit 0
+          fi
       
-          # Step 3: Send DELETE request with extracted title
+          if [ -z "$DISTRIBUTION_NAME" ] || [ "$DISTRIBUTION_NAME" = "null" ]; then
+            echo "❌ Failed to resolve a valid distribution name. Aborting delete."
+            exit 0
+          fi
+      
+          # Step 4: Delete the chosen distribution
+          echo "🗑️ Deleting distribution: '$DISTRIBUTION_NAME'"
           DELETE_RESPONSE=$(curl --silent --show-error --fail -X DELETE \
             --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
             -H "Authorization: Bearer ${TOKEN}" \
             --form-string "distribution_name=${DISTRIBUTION_NAME}")
       
-          echo "🧹 DeployGate DELETE Response: $DELETE_RESPONSE"
+          echo "✅ DeployGate DELETE Response: $DELETE_RESPONSE"
 
 
       - name: Upload APK to DeployGate
