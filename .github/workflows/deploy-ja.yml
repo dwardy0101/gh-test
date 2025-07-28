@@ -295,9 +295,8 @@ jobs:
 
           distribution_name: "${{ github.event.inputs.target-branch }}"
           release_note: |
-            Repository: ${{ github.repositoryUrl }}
+            Repository: "https://github.com/VJSOL/NativeCamp-Android"
             Branch: ${{ github.event.inputs.target-branch }}
-            Commit: ${{ github.sha }}
 
       - name: Print Results
         working-directory: NativeCamp-Android
