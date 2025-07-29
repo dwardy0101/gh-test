@@ -55,19 +55,31 @@ jobs:
    steps:
     - name: Check inputs
       run: |
-        TOKEN="${{ github.event.inputs.deploygate-token }}"
-        OWNER="${{ github.event.inputs.deploygate-name }}"
+        SECRET_DTOKEN=$(jq -r '.inputs.deploygate-token' "$GITHUB_EVENT_PATH")
+        SECRET_DOWNER=$(jq -r '.inputs.deploygate-name' "$GITHUB_EVENT_PATH")
         
-        echo "::add-mask::$TOKEN"
-        echo "::add-mask::$OWNER"
-        
+        echo "::add-mask::$SECRET_DTOKEN"
+        echo "::add-mask::$SECRET_DOWNER"
+
+        # Function: Encrypt and encode
+        enc() {
+          printf "%s" "$1" | openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:"${{ secrets.SECRET_PASSKEY }}" | base64 -w 0
+        }
+          
         echo "Checking inputs..."
-        if [[ "$TOKEN" == "none" || "$OWNER" == "none" ]]; then
+        if [[ "$DTOKEN" == "none" || "$DOWNER" == "none" ]]; then
           echo "🚫 Invalid inputs. Exiting workflow."
           exit 1
         else
           echo "✅ Inputs are valid."
+          echo "TOKEN=$(enc "$SECRET_DTOKEN")" >> encrypted.env
+          echo "OWNER=$(enc "$SECRET_DOWNER)" >> encrypted.env
         fi
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: encrypted-secrets
+        path: encrypted.env
         
       
   ########################
@@ -207,60 +219,36 @@ jobs:
           name: apk-${{ github.event.inputs.flavor }}
           path: ${{ env.APK_PATH }}
 
-      # - name: Delete DeployGate Distribution
-      #   continue-on-error: true
-      #   env:
-      #     TOKEN: ${{ github.event.inputs.deploygate-token }}
-      #     OWNER_NAME: ${{ github.event.inputs.deploygate-name }}
-      #     PLATFORM_TYPE: android
-      #     APP_ID: com.nativecamp.nativecamp
-      #     DISTRIBUTION_NAME: "${{ github.event.inputs.target-branch }}"
-      #   run: |
-      #     RESPONSE=$(curl --silent --show-error --fail -X DELETE \
-      #     --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
-      #     -H "Authorization: Bearer ${TOKEN}" \
-      #     --form-string "distribution_name=${DISTRIBUTION_NAME}")
-      #     echo "DeployGate Response: $RESPONSE" 
+      - uses: actions/download-artifact@v4
+        with:
+          name: encrypted-secrets
 
-      # - name: Fetch Distribution Title and Delete DeployGate Distribution
-      #   continue-on-error: true
-      #   env:
-      #     TOKEN: ${{ github.event.inputs.deploygate-token }}
-      #     OWNER_NAME: ${{ github.event.inputs.deploygate-name }}
-      #     PLATFORM_TYPE: android
-      #     APP_ID: com.nativecamp.nativecamp
-      #   run: |
-      #     echo "Fetching current distributions..."
-      
-      #     # Step 1: Fetch distributions
-      #     RESPONSE=$(curl --silent --show-error --fail \
-      #       --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
-      #       -H "Authorization: Bearer ${TOKEN}")
-      
-      #     # Step 2: Extract the first title
-      #     DISTRIBUTION_NAME=$(echo "$RESPONSE" | jq -r '.results.distributions[0].title')
-      
-      #     if [ -z "$DISTRIBUTION_NAME" ] || [ "$DISTRIBUTION_NAME" = "null" ]; then
-      #       echo "❌ Failed to extract distribution name. Aborting delete."
-      #       exit 0
-      #     fi
-      
-      #     echo "🎯 Deleting distribution with title: '$DISTRIBUTION_NAME'"
-      
-      #     # Step 3: Send DELETE request with extracted title
-      #     DELETE_RESPONSE=$(curl --silent --show-error --fail -X DELETE \
-      #       --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
-      #       -H "Authorization: Bearer ${TOKEN}" \
-      #       --form-string "distribution_name=${DISTRIBUTION_NAME}")
-      
-      #     echo "🧹 DeployGate DELETE Response: $DELETE_RESPONSE"
-
+      - name: Decrypt secrets
+        env:
+          SECRET_PASS: ${{ secrets.SECRET_PASSKEY }}
+        shell: bash
+        run: |
+          while IFS= read -r line; do
+            [[ -z "$line" ]] && continue
+            key="${line%%=*}"
+            value="${line#*=}"
+            if [[ -n "$key" && -n "$value" ]]; then
+              # Decrypt using OpenSSL with decoded binary
+              decrypted=$(echo "$value" | base64 -d | openssl enc -aes-256-cbc -pbkdf2 -d -salt -pass pass:"$SECRET_PASS" 2>/dev/null)
+              if [[ $? -ne 0 ]]; then
+                echo "❌ Failed to decrypt $key"
+                exit 1
+              else
+                echo "$key=$decrypted" >> $GITHUB_ENV
+                echo "::add-mask::$decrypted"
+                echo "✅ Decrypted $key"
+              fi
+            fi
+          done < encrypted.env
 
       - name: Fetch Distribution Title and Delete DeployGate Distribution
         continue-on-error: true
         env:
-          TOKEN: ${{ github.event.inputs.deploygate-token }}
-          OWNER_NAME: ${{ github.event.inputs.deploygate-name }}
           PLATFORM_TYPE: android
           APP_ID: com.nativecamp.nativecamp
           DIST_NAME_TO_DELETE: ${{ github.event.inputs.distribution-name }}
@@ -269,7 +257,7 @@ jobs:
       
           # Step 1: Fetch distributions
           RESPONSE=$(curl --silent --show-error --fail \
-            --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
+            --url "https://deploygate.com/api/users/${OWNER}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
             -H "Authorization: Bearer ${TOKEN}")
       
           COUNT=$(echo "$RESPONSE" | jq '.results.distributions | length')
@@ -302,7 +290,7 @@ jobs:
           # Step 4: Delete the chosen distribution
           echo "🗑️ Deleting distribution: '$DISTRIBUTION_NAME'"
           DELETE_RESPONSE=$(curl --silent --show-error --fail -X DELETE \
-            --url "https://deploygate.com/api/users/${OWNER_NAME}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
+            --url "https://deploygate.com/api/users/${OWNER}/platforms/${PLATFORM_TYPE}/apps/${APP_ID}/distributions" \
             -H "Authorization: Bearer ${TOKEN}" \
             --form-string "distribution_name=${DISTRIBUTION_NAME}")
       
@@ -313,8 +301,8 @@ jobs:
         id: deploygate
         uses: DeployGate/deploygate-upload-github-action@v1.1.0
         with:
-          api_token: ${{ github.event.inputs.deploygate-token }} #${{ secrets.DEPLOYGATE_API_TOKEN }}
-          owner_name: ${{ github.event.inputs.deploygate-name }} #${{ secrets.DEPLOYGATE_OWNER_NAME }}
+          api_token: ${{ env.TOKEN }}
+          owner_name: ${{ env.OWNER }}
           file_path: ${{ env.APK_PATH }} #NativeCamp-Android/app/build/outputs/apk/dev1Google/debug/app-dev1-google-debug.apk
           message: |
             ${{ github.event.inputs.target-branch }}
