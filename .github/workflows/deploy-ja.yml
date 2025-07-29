@@ -219,6 +219,8 @@ jobs:
             fi
           done < encrypted.env
 
+          rm -f encrypted.env
+
 
       - name: Fetch Distribution Title and Delete DeployGate Distribution
         continue-on-error: true
