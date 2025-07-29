@@ -55,8 +55,8 @@ jobs:
    steps:
     - name: Check inputs
       run: |
-        SECRET_DTOKEN=$(jq -r '.inputs.deploygate-token' "$GITHUB_EVENT_PATH")
-        SECRET_DOWNER=$(jq -r '.inputs.deploygate-name' "$GITHUB_EVENT_PATH")
+        SECRET_DTOKEN=$(jq -r '.inputs["deploygate-token"]' "$GITHUB_EVENT_PATH")
+        SECRET_DOWNER=$(jq -r '.inputs["deploygate-name"]' "$GITHUB_EVENT_PATH")
         
         echo "::add-mask::$SECRET_DTOKEN"
         echo "::add-mask::$SECRET_DOWNER"
@@ -73,7 +73,7 @@ jobs:
         else
           echo "✅ Inputs are valid."
           echo "TOKEN=$(enc "$SECRET_DTOKEN")" >> encrypted.env
-          echo "OWNER=$(enc "$SECRET_DOWNER)" >> encrypted.env
+          echo "OWNER=$(enc "$SECRET_DOWNER")" >> encrypted.env
         fi
 
     - uses: actions/upload-artifact@v4
