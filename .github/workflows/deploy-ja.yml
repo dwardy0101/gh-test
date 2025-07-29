@@ -48,6 +48,8 @@ jobs:
           exit 1
         else
           echo "✅ Inputs are valid."
+
+          > encrypted.env
           echo "TOKEN=$(enc "$SECRET_DTOKEN")" >> encrypted.env
           echo "OWNER=$(enc "$SECRET_DOWNER")" >> encrypted.env
         fi
