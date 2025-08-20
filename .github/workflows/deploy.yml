@@ -105,22 +105,32 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
-      - name: Cache Flutter pub packages
-        uses: actions/cache@v4
-        with:
-          path: ~/.pub-cache
-          key: ${{ runner.os }}-flutter-pub-${{ hashFiles('**/pubspec.lock') }}
-          restore-keys: ${{ runner.os }}-flutter-pub-
-
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.29.3
+          flutter-version: '3.24.3'  # Use a stable version (3.29.3 might be too new)
           channel: stable
-
+          cache: true  # Enable built-in caching
+      
+      - name: Cache Flutter pub packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            ${{ github.workspace }}/NativeCamp-FlutterModule/.dart_tool
+          key: ${{ runner.os }}-flutter-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-flutter-pub-
+      
+      - name: Clean Flutter
+        working-directory: NativeCamp-FlutterModule
+        run: flutter clean
+      
       - name: Install Flutter dependencies
         working-directory: NativeCamp-FlutterModule
-        run: flutter pub get
+        run: |
+          flutter pub cache repair
+          flutter pub get
 
       - name: Generate Flutter AAR source hash
         id: flutter_hash
