@@ -88,6 +88,11 @@ jobs:
           key: ${{ runner.os }}-flutter-pub-${{ hashFiles('**/pubspec.lock') }}
           restore-keys: ${{ runner.os }}-flutter-pub-
 
+      - name: Force intl override in CI
+        working-directory: NativeCamp-FlutterModule
+        run: |
+          echo -e "\ndependency_overrides:\n  intl: ^0.20.2" >> pubspec.yaml
+
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
