@@ -215,6 +215,12 @@ jobs:
         working-directory: NativeCamp-Android
         run: chmod +x gradlew
 
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install NDK
+        run: sdkmanager "ndk;29.0.14033849"
+
       - name: Build a debug APK
         working-directory: NativeCamp-Android
         run: |
